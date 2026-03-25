@@ -1,21 +1,16 @@
 import MixinStorage "blob-storage/Mixin";
 import Storage "blob-storage/Storage";
-import Array "mo:core/Array";
-import Nat "mo:core/Nat";
-import Text "mo:core/Text";
+import AccessControl "authorization/access-control";
 import Map "mo:core/Map";
 import Principal "mo:core/Principal";
-import Iter "mo:core/Iter";
 import Runtime "mo:core/Runtime";
-import AccessControl "authorization/access-control";
-import MixinAuthorization "authorization/MixinAuthorization";
-
-
+import Text "mo:core/Text";
 
 actor {
-  // Use prefabricated authentication system
+  // Kept from previous version to avoid stable variable discard errors
   let accessControlState = AccessControl.initState();
-  include MixinAuthorization(accessControlState);
+  type UserProfile = { name : Text; email : Text; address : Text };
+  let userProfiles = Map.empty<Principal, UserProfile>();
 
   // Use prefabricated storage system
   include MixinStorage();
@@ -23,6 +18,8 @@ actor {
   let products = Map.empty<Text, Product>();
   var nextId = 2;
   var fee : Nat = 5000;
+
+  let ADMIN_PASSWORD : Text = "NAVAYATA@#2025";
 
   type Product = {
     name : Text;
@@ -32,110 +29,46 @@ actor {
     image : Storage.ExternalBlob;
   };
 
-  // User profile type as required by instructions
-  public type UserProfile = {
-    name : Text;
-    email : Text;
-    address : Text;
-  };
-
-  let userProfiles = Map.empty<Principal, UserProfile>();
-
-  // User profile management functions
-  public query ({ caller }) func getCallerUserProfile() : async ?UserProfile {
-    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
-      Runtime.trap("Unauthorized: Only users can access profiles");
-    };
-    userProfiles.get(caller);
-  };
-
-  public query ({ caller }) func getUserProfile(user : Principal) : async ?UserProfile {
-    if (caller != user and not AccessControl.isAdmin(accessControlState, caller)) {
-      Runtime.trap("Unauthorized: Can only view your own profile");
-    };
-    userProfiles.get(user);
-  };
-
-  public shared ({ caller }) func saveCallerUserProfile(profile : UserProfile) : async () {
-    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
-      Runtime.trap("Unauthorized: Only users can save profiles");
-    };
-    userProfiles.add(caller, profile);
-  };
-
-  // Allow first caller to claim admin if no admins exist yet
-  public shared ({ caller }) func claimFirstAdmin() : async Bool {
-    if (accessControlState.adminAssigned) {
-      return false; // admin already exists, cannot claim
-    };
-    AccessControl.assignRole(accessControlState, caller, caller, #admin);
-    true;
-  };
-
-  // Check if any admin exists
-  public query func hasAnyAdmin() : async Bool {
-    accessControlState.adminAssigned;
-  };
-
-  // Product management functions (admin-only)
-  public shared ({ caller }) func addProduct(name : Text, price : Nat, contents : Text, image : Storage.ExternalBlob) : async () {
-    if (not (AccessControl.hasPermission(accessControlState, caller, #admin))) {
-      Runtime.trap("Unauthorized: Only admins can perform this action");
-    };
+  public shared func addProduct(name : Text, price : Nat, contents : Text, image : Storage.ExternalBlob) : async () {
     let id = nextId.toText();
     nextId += 1;
-    let product : Product = {
-      name;
-      id;
-      price;
-      contents;
-      image;
-    };
+    let product : Product = { name; id; price; contents; image };
     products.add(id, product);
   };
 
-  public shared ({ caller }) func removeProduct(id : Text) : async Product {
-    if (not (AccessControl.hasPermission(accessControlState, caller, #admin))) {
-      Runtime.trap("Unauthorized: Only admins can perform this action");
-    };
+  public shared func removeProduct(id : Text) : async Product {
     let product = products.get(id);
     products.remove(id);
     switch (product) {
       case (null) { Runtime.trap("Product does not exist!") };
-      case (?product) { product };
+      case (?p) { p };
     };
   };
 
-  public shared ({ caller }) func modifyProduct(product : Product) : async () {
-    if (not (AccessControl.hasPermission(accessControlState, caller, #admin))) {
-      Runtime.trap("Unauthorized: Only admins can perform this action");
-    };
+  public shared func modifyProduct(product : Product) : async () {
     if (not products.containsKey(product.id)) {
       Runtime.trap("Product does not exist!");
     };
     products.add(product.id, product);
   };
 
-  public shared ({ caller }) func setFee(newFee : Nat) : async () {
-    if (not (AccessControl.hasPermission(accessControlState, caller, #admin))) {
-      Runtime.trap("Unauthorized: Only admins can perform this action");
-    };
+  public shared func setFee(newFee : Nat) : async () {
     fee := newFee;
   };
 
-  // Public query functions (no authorization needed)
-  public query ({ caller }) func getAllProducts() : async [Product] {
-    ignore caller;
+  public query func verifyAdminPassword(password : Text) : async Bool {
+    password == ADMIN_PASSWORD;
+  };
+
+  public query func getAllProducts() : async [Product] {
     products.values().toArray();
   };
 
-  public query ({ caller }) func getProductById(productId : Text) : async ?Product {
-    ignore caller;
+  public query func getProductById(productId : Text) : async ?Product {
     products.get(productId);
   };
 
-  public query ({ caller }) func getFee() : async Nat {
-    ignore caller;
+  public query func getFee() : async Nat {
     fee;
   };
 };

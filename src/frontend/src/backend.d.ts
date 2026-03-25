@@ -1,4 +1,3 @@
-import type { Principal } from "@icp-sdk/core/principal";
 export interface Some<T> {
     __kind__: "Some";
     value: T;
@@ -26,25 +25,13 @@ export interface Product {
     image: ExternalBlob;
     price: bigint;
 }
-export enum UserRole {
-    admin = "admin",
-    user = "user",
-    guest = "guest"
-}
 export interface backendInterface {
     addProduct(name: string, price: bigint, contents: string, image: ExternalBlob): Promise<void>;
-    assignCallerUserRole(user: Principal, role: UserRole): Promise<void>;
-    claimFirstAdmin(): Promise<boolean>;
-    hasAnyAdmin(): Promise<boolean>;
     getAllProducts(): Promise<Array<Product>>;
-    getCallerUserProfile(): Promise<UserProfile | null>;
-    getCallerUserRole(): Promise<UserRole>;
     getFee(): Promise<bigint>;
     getProductById(productId: string): Promise<Product | null>;
-    getUserProfile(user: Principal): Promise<UserProfile | null>;
-    isCallerAdmin(): Promise<boolean>;
     modifyProduct(product: Product): Promise<void>;
     removeProduct(id: string): Promise<Product>;
-    saveCallerUserProfile(profile: UserProfile): Promise<void>;
     setFee(newFee: bigint): Promise<void>;
+    verifyAdminPassword(password: string): Promise<boolean>;
 }

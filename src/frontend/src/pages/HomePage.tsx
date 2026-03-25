@@ -143,6 +143,17 @@ export default function HomePage() {
               </button>
             ))}
             <a
+              href="/inquiry"
+              className="text-sm font-bold tracking-widest uppercase px-3 py-1 transition-all"
+              style={{
+                color: "oklch(72% 0.17 78)",
+                border: "1px solid oklch(72% 0.17 78 / 0.5)",
+              }}
+              data-ocid="nav.link"
+            >
+              Submit Inquiry
+            </a>
+            <a
               href="/admin"
               className="text-sm font-medium text-secondary-foreground/40 hover:text-accent/60 transition-colors tracking-widest uppercase flex items-center gap-1"
               data-ocid="nav.link"
@@ -193,6 +204,14 @@ export default function HomePage() {
               </button>
             ))}
             <a
+              href="/inquiry"
+              className="py-2 text-sm font-bold uppercase tracking-widest transition-colors"
+              style={{ color: "oklch(72% 0.17 78)" }}
+              data-ocid="nav.link"
+            >
+              ✦ Submit Inquiry
+            </a>
+            <a
               href="/admin"
               className="py-2 text-sm font-medium text-secondary-foreground/40 hover:text-accent/60 transition-colors uppercase tracking-widest flex items-center gap-1"
               data-ocid="nav.link"
@@ -223,7 +242,7 @@ export default function HomePage() {
           className="pt-16 min-h-screen flex items-center relative overflow-hidden"
           style={{
             background:
-              "linear-gradient(135deg, oklch(30% 0.13 18) 0%, oklch(38% 0.15 20) 40%, oklch(30% 0.1 25) 100%)",
+              "linear-gradient(135deg, oklch(22% 0.14 18) 0%, oklch(30% 0.16 20) 40%, oklch(22% 0.12 25) 100%)",
           }}
         >
           <div className="absolute inset-0 jali-bg opacity-30" />
@@ -379,7 +398,7 @@ export default function HomePage() {
         {/* Features Strip */}
         <section
           className="py-12 border-y border-border relative overflow-hidden"
-          style={{ background: "oklch(94% 0.025 75)" }}
+          style={{ background: "oklch(16% 0.05 20)" }}
         >
           <div className="absolute top-0 left-0 right-0 h-5 overflow-hidden text-accent/20">
             <PaisleyBorderTop className="w-full h-full" />
@@ -433,7 +452,7 @@ export default function HomePage() {
                 </p>
               )}
               {feeAmount === 0 && (
-                <p className="text-sm text-green-700 mt-2 flex items-center justify-center gap-1">
+                <p className="text-sm text-green-400 mt-2 flex items-center justify-center gap-1">
                   <Truck className="w-4 h-4" />
                   Free Delivery on all orders!
                 </p>
@@ -542,7 +561,7 @@ export default function HomePage() {
         <section
           id="about"
           className="py-20 relative overflow-hidden"
-          style={{ background: "oklch(94% 0.025 75)" }}
+          style={{ background: "oklch(16% 0.05 20)" }}
         >
           <div className="absolute right-0 top-1/2 -translate-y-1/2 w-96 h-96 text-primary/5 pointer-events-none">
             <MandalaDecor className="w-full h-full" />
@@ -627,7 +646,7 @@ export default function HomePage() {
               className="relative overflow-hidden"
               style={{
                 background:
-                  "linear-gradient(135deg, oklch(30% 0.13 18) 0%, oklch(38% 0.15 20) 50%, oklch(28% 0.1 25) 100%)",
+                  "linear-gradient(135deg, oklch(22% 0.14 18) 0%, oklch(30% 0.16 20) 50%, oklch(20% 0.12 25) 100%)",
               }}
             >
               <div className="absolute top-4 left-4 w-10 h-10 border-t-2 border-l-2 border-accent/50" />
@@ -656,7 +675,7 @@ export default function HomePage() {
                   Message us directly on WhatsApp to place orders, ask about
                   availability, or get styling advice.
                 </p>
-                <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+                <div className="flex flex-col sm:flex-row gap-4 justify-center items-center flex-wrap">
                   <a
                     href={WA_BASE}
                     target="_blank"
@@ -666,6 +685,19 @@ export default function HomePage() {
                     <Button className="rounded-none bg-accent text-accent-foreground hover:bg-accent/90 gap-2 px-10 py-3 h-auto text-sm font-semibold shadow-gold uppercase tracking-widest transition-all">
                       <MessageCircle className="w-5 h-5" />
                       Chat on WhatsApp
+                    </Button>
+                  </a>
+                  <a href="/inquiry" data-ocid="contact.secondary_button">
+                    <Button
+                      className="rounded-none gap-2 px-10 py-3 h-auto text-sm font-semibold uppercase tracking-widest transition-all"
+                      style={{
+                        background: "transparent",
+                        border: "1.5px solid oklch(72% 0.17 78 / 0.7)",
+                        color: "oklch(72% 0.17 78)",
+                      }}
+                    >
+                      <MessageCircle className="w-5 h-5" />
+                      Submit Detailed Inquiry
                     </Button>
                   </a>
                   <div className="font-display text-xl text-accent">
@@ -679,7 +711,7 @@ export default function HomePage() {
       </main>
 
       {/* Footer */}
-      <footer style={{ background: "oklch(18% 0.05 22)" }}>
+      <footer style={{ background: "oklch(10% 0.04 22)" }}>
         <div className="h-[2px] bg-gradient-to-r from-transparent via-accent/60 to-transparent" />
         <PaisleyBorderTop className="w-full h-6 text-accent/20" />
         <div className="max-w-6xl mx-auto px-4 sm:px-6 py-12">
@@ -729,6 +761,16 @@ export default function HomePage() {
                     </button>
                   </li>
                 ))}
+                <li>
+                  <a
+                    href="/inquiry"
+                    className="hover:text-accent text-sm transition-colors"
+                    style={{ color: "oklch(72% 0.17 78 / 0.8)" }}
+                    data-ocid="footer.link"
+                  >
+                    Submit Inquiry
+                  </a>
+                </li>
               </ul>
             </div>
             <div className="space-y-4">

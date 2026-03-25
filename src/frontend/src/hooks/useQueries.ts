@@ -26,45 +26,6 @@ export function useGetFee() {
   });
 }
 
-export function useIsCallerAdmin() {
-  const { actor, isFetching } = useActor();
-  return useQuery<boolean>({
-    queryKey: ["isAdmin"],
-    queryFn: async () => {
-      if (!actor) return false;
-      return actor.isCallerAdmin();
-    },
-    enabled: !!actor && !isFetching,
-  });
-}
-
-export function useHasAnyAdmin() {
-  const { actor, isFetching } = useActor();
-  return useQuery<boolean>({
-    queryKey: ["hasAnyAdmin"],
-    queryFn: async () => {
-      if (!actor) return true; // assume true to avoid false claim button
-      return actor.hasAnyAdmin();
-    },
-    enabled: !!actor && !isFetching,
-  });
-}
-
-export function useClaimFirstAdmin() {
-  const { actor } = useActor();
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: async () => {
-      if (!actor) throw new Error("Not connected");
-      return actor.claimFirstAdmin();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["isAdmin"] });
-      queryClient.invalidateQueries({ queryKey: ["hasAnyAdmin"] });
-    },
-  });
-}
-
 export function useSetFee() {
   const { actor } = useActor();
   const queryClient = useQueryClient();

@@ -6,31 +6,44 @@ import { Label } from "@/components/ui/label";
 import { useNavigate } from "@tanstack/react-router";
 import { Eye, EyeOff, Lock, LogIn } from "lucide-react";
 import { useState } from "react";
-
-const ADMIN_PASSWORD = "NAVAYATA@#2025";
+import { useActor } from "../hooks/useActor";
 
 export default function AdminLogin() {
   const navigate = useNavigate();
+  const { actor } = useActor();
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleLogin = () => {
+  const handleLogin = async () => {
     if (!password) {
       setError("Please enter your password.");
       return;
     }
     setIsLoading(true);
-    setTimeout(() => {
-      if (password === ADMIN_PASSWORD) {
+    setError("");
+    try {
+      let valid = false;
+      if (actor) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        valid = await (actor as any).verifyAdminPassword(password);
+      } else {
+        setError("Connecting to server, please try again.");
+        setIsLoading(false);
+        return;
+      }
+      if (valid) {
         sessionStorage.setItem("adminAuthenticated", "true");
         navigate({ to: "/admin/dashboard" });
       } else {
         setError("Incorrect password. Please try again.");
-        setIsLoading(false);
       }
-    }, 400);
+    } catch {
+      setError("Failed to verify password. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -124,7 +137,7 @@ export default function AdminLogin() {
 
           <Button
             onClick={handleLogin}
-            disabled={isLoading}
+            disabled={isLoading || !actor}
             className="w-full rounded-none bg-secondary text-accent border border-accent/40 hover:bg-accent hover:text-accent-foreground gap-2 uppercase tracking-widest text-xs h-12 transition-all"
             data-ocid="admin.submit_button"
           >

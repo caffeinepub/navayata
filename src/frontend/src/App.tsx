@@ -9,6 +9,7 @@ import {
 import AdminDashboard from "./pages/AdminDashboard";
 import AdminLogin from "./pages/AdminLogin";
 import HomePage from "./pages/HomePage";
+import InquiryPage from "./pages/InquiryPage";
 
 const rootRoute = createRootRoute({
   component: () => (
@@ -37,10 +38,17 @@ const adminDashboardRoute = createRoute({
   component: AdminDashboard,
 });
 
+const inquiryRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/inquiry",
+  component: InquiryPage,
+});
+
 const routeTree = rootRoute.addChildren([
   homeRoute,
   adminRoute,
   adminDashboardRoute,
+  inquiryRoute,
 ]);
 
 const router = createRouter({ routeTree });
