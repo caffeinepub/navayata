@@ -3,7 +3,6 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Separator } from "@/components/ui/separator";
 import {
   Table,
   TableBody,
@@ -15,6 +14,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { useNavigate } from "@tanstack/react-router";
 import {
+  CheckCircle2,
   Loader2,
   LogOut,
   Package,
@@ -38,16 +38,73 @@ import {
   useSetFee,
 } from "../hooks/useQueries";
 
-function UploadProgress({ progress }: { progress: number }) {
+function UploadProgress({
+  progress,
+  label,
+}: { progress: number; label?: string }) {
   if (progress <= 0 || progress >= 100) return null;
   return (
-    <div className="w-full bg-border rounded-full h-1.5">
-      <div
-        className="bg-primary h-1.5 rounded-full transition-all"
-        style={{ width: `${progress}%` }}
-      />
+    <div className="space-y-1">
+      <div className="w-full bg-border rounded-full h-2">
+        <div
+          className="bg-primary h-2 rounded-full transition-all duration-300"
+          style={{ width: `${progress}%` }}
+        />
+      </div>
+      {label && <p className="text-xs text-muted-foreground">{label}</p>}
     </div>
   );
+}
+
+/** Compress image using canvas — reduces any photo to ≤800px wide at 80% quality */
+async function compressImage(file: File): Promise<Uint8Array<ArrayBuffer>> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    const objectUrl = URL.createObjectURL(file);
+    img.onload = () => {
+      URL.revokeObjectURL(objectUrl);
+      const MAX = 1200;
+      let { width, height } = img;
+      if (width > MAX || height > MAX) {
+        if (width > height) {
+          height = Math.round((height * MAX) / width);
+          width = MAX;
+        } else {
+          width = Math.round((width * MAX) / height);
+          height = MAX;
+        }
+      }
+      const canvas = document.createElement("canvas");
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) {
+        reject(new Error("Canvas not supported"));
+        return;
+      }
+      ctx.drawImage(img, 0, 0, width, height);
+      canvas.toBlob(
+        (blob) => {
+          if (!blob) {
+            reject(new Error("Image compression failed"));
+            return;
+          }
+          blob
+            .arrayBuffer()
+            .then((buf) =>
+              resolve(new Uint8Array(buf) as Uint8Array<ArrayBuffer>),
+            );
+        },
+        "image/jpeg",
+        0.82,
+      );
+    };
+    img.onerror = () => {
+      URL.revokeObjectURL(objectUrl);
+      reject(new Error("Failed to load image"));
+    };
+    img.src = objectUrl;
+  });
 }
 
 export default function AdminDashboard() {
@@ -71,27 +128,26 @@ export default function AdminDashboard() {
   const removeProductMutation = useRemoveProduct();
   const modifyProductMutation = useModifyProduct();
 
-  // Fee state
   const [feeInput, setFeeInput] = useState("");
   useEffect(() => {
     if (fee !== undefined) setFeeInput(String(Number(fee)));
   }, [fee]);
 
-  // Add product state
   const [productName, setProductName] = useState("");
   const [productPrice, setProductPrice] = useState("");
   const [productContents, setProductContents] = useState("");
   const [productFile, setProductFile] = useState<File | null>(null);
   const [uploadProgress, setUploadProgress] = useState(0);
+  const [uploadLabel, setUploadLabel] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Edit state
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editName, setEditName] = useState("");
   const [editPrice, setEditPrice] = useState("");
   const [editContents, setEditContents] = useState("");
   const [editFile, setEditFile] = useState<File | null>(null);
   const [editProgress, setEditProgress] = useState(0);
+  const [editLabel, setEditLabel] = useState("");
 
   const handleSetFee = async () => {
     const val = Number(feeInput);
@@ -102,32 +158,12 @@ export default function AdminDashboard() {
     try {
       await setFeeMutation.mutateAsync(BigInt(val));
       toast.success("Delivery fee updated!");
-    } catch {
-      toast.error("Failed to update fee");
+    } catch (e) {
+      toast.error(
+        `Failed to update fee: ${e instanceof Error ? e.message : String(e)}`,
+      );
     }
   };
-
-  const readFileAsUint8Array = (
-    file: File,
-    onProgress?: (p: number) => void,
-  ): Promise<Uint8Array<ArrayBuffer>> =>
-    new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onprogress = (e) => {
-        if (e.lengthComputable && onProgress)
-          onProgress(Math.round((e.loaded / e.total) * 50));
-      };
-      reader.onload = (e) => {
-        onProgress?.(80);
-        resolve(
-          new Uint8Array(
-            e.target?.result as ArrayBuffer,
-          ) as Uint8Array<ArrayBuffer>,
-        );
-      };
-      reader.onerror = () => reject(new Error("File read failed"));
-      reader.readAsArrayBuffer(file);
-    });
 
   const handleAddProduct = async () => {
     if (!productName.trim() || !productPrice || !productFile) {
@@ -140,11 +176,16 @@ export default function AdminDashboard() {
       return;
     }
     try {
-      setUploadProgress(10);
-      const bytes = await readFileAsUint8Array(productFile, setUploadProgress);
-      const blob = ExternalBlob.fromBytes(bytes).withUploadProgress((p) =>
-        setUploadProgress(80 + Math.round(p * 0.2)),
-      );
+      setUploadProgress(5);
+      setUploadLabel("Compressing image...");
+      const bytes = await compressImage(productFile);
+      setUploadProgress(30);
+      setUploadLabel("Uploading image...");
+      const blob = ExternalBlob.fromBytes(bytes).withUploadProgress((p) => {
+        setUploadProgress(30 + Math.round(p * 0.6));
+        setUploadLabel(`Uploading... ${30 + Math.round(p * 0.6)}%`);
+      });
+      setUploadLabel("Saving product...");
       await addProductMutation.mutateAsync({
         name: productName.trim(),
         price: BigInt(price),
@@ -152,16 +193,22 @@ export default function AdminDashboard() {
         image: blob,
       });
       setUploadProgress(100);
+      setUploadLabel("Done!");
       toast.success(`"${productName}" added successfully!`);
       setProductName("");
       setProductPrice("");
       setProductContents("");
       setProductFile(null);
       if (fileInputRef.current) fileInputRef.current.value = "";
-      setTimeout(() => setUploadProgress(0), 1000);
-    } catch {
-      toast.error("Failed to add product");
+      setTimeout(() => {
+        setUploadProgress(0);
+        setUploadLabel("");
+      }, 1500);
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      toast.error(`Upload failed: ${msg}`, { duration: 6000 });
       setUploadProgress(0);
+      setUploadLabel("");
     }
   };
 
@@ -170,8 +217,10 @@ export default function AdminDashboard() {
     try {
       await removeProductMutation.mutateAsync(id);
       toast.success(`"${name}" deleted.`);
-    } catch {
-      toast.error("Failed to delete product");
+    } catch (e) {
+      toast.error(
+        `Failed to delete: ${e instanceof Error ? e.message : String(e)}`,
+      );
     }
   };
 
@@ -182,12 +231,14 @@ export default function AdminDashboard() {
     setEditContents(product.contents);
     setEditFile(null);
     setEditProgress(0);
+    setEditLabel("");
   };
 
   const cancelEdit = () => {
     setEditingId(null);
     setEditFile(null);
     setEditProgress(0);
+    setEditLabel("");
   };
 
   const handleSaveEdit = async (product: Product) => {
@@ -199,12 +250,17 @@ export default function AdminDashboard() {
     try {
       let imageBlob = product.image;
       if (editFile) {
-        setEditProgress(10);
-        const bytes = await readFileAsUint8Array(editFile, setEditProgress);
-        imageBlob = ExternalBlob.fromBytes(bytes).withUploadProgress((p) =>
-          setEditProgress(80 + Math.round(p * 0.2)),
-        );
+        setEditProgress(5);
+        setEditLabel("Compressing...");
+        const bytes = await compressImage(editFile);
+        setEditProgress(30);
+        setEditLabel("Uploading...");
+        imageBlob = ExternalBlob.fromBytes(bytes).withUploadProgress((p) => {
+          setEditProgress(30 + Math.round(p * 0.6));
+          setEditLabel(`Uploading... ${30 + Math.round(p * 0.6)}%`);
+        });
       }
+      setEditLabel("Saving...");
       await modifyProductMutation.mutateAsync({
         ...product,
         name: editName.trim(),
@@ -214,9 +270,11 @@ export default function AdminDashboard() {
       });
       toast.success("Product updated!");
       cancelEdit();
-    } catch {
-      toast.error("Failed to update product");
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      toast.error(`Update failed: ${msg}`, { duration: 6000 });
       setEditProgress(0);
+      setEditLabel("");
     }
   };
 
@@ -233,7 +291,6 @@ export default function AdminDashboard() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
       <header className="sticky top-0 z-50 bg-secondary border-b border-accent/30 shadow-md">
         <div className="h-[2px] bg-gradient-to-r from-accent/40 via-accent to-accent/40" />
         <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
@@ -391,11 +448,20 @@ export default function AdminDashboard() {
               />
               {productFile && (
                 <p className="text-xs text-muted-foreground">
-                  Selected: {productFile.name}
+                  Selected: {productFile.name} —{" "}
+                  <span className="text-primary">
+                    Will be auto-compressed before upload
+                  </span>
                 </p>
               )}
             </div>
-            <UploadProgress progress={uploadProgress} />
+            <UploadProgress progress={uploadProgress} label={uploadLabel} />
+            {uploadProgress === 100 && (
+              <div className="flex items-center gap-2 text-sm text-primary">
+                <CheckCircle2 className="w-4 h-4" />
+                Product added successfully!
+              </div>
+            )}
             <Button
               onClick={handleAddProduct}
               disabled={addProductMutation.isPending}
@@ -407,7 +473,7 @@ export default function AdminDashboard() {
               ) : (
                 <Plus className="w-4 h-4" />
               )}
-              {addProductMutation.isPending ? "Adding..." : "Add Product"}
+              {addProductMutation.isPending ? "Uploading..." : "Add Product"}
             </Button>
           </CardContent>
         </Card>
@@ -486,7 +552,10 @@ export default function AdminDashboard() {
                                   className="block text-xs text-muted-foreground file:mr-2 file:py-1 file:px-2 file:rounded-none file:border file:border-accent/40 file:text-xs file:bg-secondary file:text-accent w-28"
                                   data-ocid={`products.upload_button.${idx + 1}`}
                                 />
-                                <UploadProgress progress={editProgress} />
+                                <UploadProgress
+                                  progress={editProgress}
+                                  label={editLabel}
+                                />
                               </div>
                             </TableCell>
                             <TableCell>
@@ -610,10 +679,9 @@ export default function AdminDashboard() {
         </Card>
       </main>
 
-      {/* Footer */}
       <footer className="mt-16 border-t border-border py-6 text-center">
         <p className="text-xs text-muted-foreground">
-          &copy; {new Date().getFullYear()} Navayata Admin — Built with ❤️ using{" "}
+          &copy; {new Date().getFullYear()} Navayata Admin —{" "}
           <a
             href={`https://caffeine.ai?utm_source=caffeine-footer&utm_medium=referral&utm_content=${encodeURIComponent(window.location.hostname)}`}
             target="_blank"
