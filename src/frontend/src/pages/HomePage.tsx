@@ -3,18 +3,30 @@ import { MandalaDecor } from "@/components/MandalaDecor";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
   ChevronRight,
   Facebook,
   Instagram,
   Loader2,
+  MapPin,
   Menu,
   MessageCircle,
+  Phone,
   RotateCcw,
   Settings,
   Star,
   TrendingUp,
   Truck,
   Twitter,
+  User,
   X,
 } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -46,7 +58,7 @@ const aboutStats = [
   { val: "500+", label: "Happy Customers", sub: "Across India", offset: false },
   { val: "100+", label: "Unique Designs", sub: "Every season", offset: true },
   {
-    val: "4.9★",
+    val: "4.9\u2605",
     label: "Customer Rating",
     sub: "Verified reviews",
     offset: false,
@@ -59,6 +71,14 @@ const aboutStats = [
     highlight: true,
   },
 ];
+
+type EnquiryProduct = {
+  id: string;
+  name: string;
+  price: bigint | number;
+  contents?: string;
+  image: { getDirectURL: () => string };
+};
 
 function PaisleyBorderTop({ className }: { className?: string }) {
   return (
@@ -91,8 +111,46 @@ export default function HomePage() {
   const { data: products = [], isLoading: loadingProducts } =
     useGetAllProducts();
   const { data: fee } = useGetFee();
-
   const feeAmount = fee !== undefined ? Number(fee) : null;
+
+  const [enquiryOpen, setEnquiryOpen] = useState(false);
+  const [enquiryProduct, setEnquiryProduct] = useState<EnquiryProduct | null>(
+    null,
+  );
+  const [enquiryName, setEnquiryName] = useState("");
+  const [enquiryPhone, setEnquiryPhone] = useState("");
+  const [enquiryLocation, setEnquiryLocation] = useState("");
+
+  const openEnquiry = (product: EnquiryProduct) => {
+    setEnquiryName("");
+    setEnquiryPhone("");
+    setEnquiryLocation("");
+    setEnquiryProduct(product);
+    setEnquiryOpen(true);
+  };
+
+  const closeEnquiry = () => {
+    setEnquiryOpen(false);
+    setEnquiryProduct(null);
+  };
+
+  const submitEnquiry = () => {
+    if (!enquiryProduct) return;
+    const price = Number(enquiryProduct.price);
+    const text = [
+      `Hi! I'm interested in ${enquiryProduct.name} priced at \u20B9${price}.`,
+      `Delivery: \u20B9${feeAmount ?? 0}`,
+      "",
+      "My details:",
+      `Name: ${enquiryName}`,
+      `Phone: ${enquiryPhone}`,
+      `Location: ${enquiryLocation}`,
+      "",
+      "Please confirm availability.",
+    ].join("\n");
+    window.open(`${WA_BASE}?text=${encodeURIComponent(text)}`, "_blank");
+    closeEnquiry();
+  };
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 20);
@@ -107,13 +165,120 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen bg-background font-body">
-      {/* ── Sticky Header ── */}
+      {/* Enquiry Popup */}
+      <Dialog
+        open={enquiryOpen}
+        onOpenChange={(v) => {
+          if (!v) closeEnquiry();
+        }}
+      >
+        <DialogContent
+          className="rounded-none border border-accent/40 max-w-md p-0 overflow-hidden"
+          style={{
+            background: "oklch(14% 0.07 20)",
+            boxShadow: "0 8px 40px oklch(0% 0 0 / 0.7)",
+          }}
+          data-ocid="enquiry.dialog"
+        >
+          <div className="h-[3px] w-full bg-gradient-to-r from-accent/30 via-accent to-accent/30" />
+          <div className="px-7 pt-6 pb-7 space-y-5">
+            <DialogHeader className="space-y-1.5">
+              <div className="flex items-center gap-2">
+                <MessageCircle className="w-5 h-5 text-green-400" />
+                <DialogTitle className="font-display text-xl text-accent tracking-wide">
+                  Enquire on WhatsApp
+                </DialogTitle>
+              </div>
+              {enquiryProduct && (
+                <DialogDescription className="text-muted-foreground text-sm">
+                  <span className="text-foreground font-medium">
+                    {enquiryProduct.name}
+                  </span>
+                  {" — ₹"}
+                  {Number(enquiryProduct.price)}
+                </DialogDescription>
+              )}
+            </DialogHeader>
+
+            <div
+              className="h-px"
+              style={{
+                background:
+                  "linear-gradient(to right, transparent, oklch(72% 0.17 78 / 0.3), transparent)",
+              }}
+            />
+
+            <div className="space-y-4">
+              <div className="space-y-1.5">
+                <Label className="text-xs uppercase tracking-widest text-accent/70 flex items-center gap-1.5">
+                  <User className="w-3.5 h-3.5" /> Your Name
+                </Label>
+                <Input
+                  value={enquiryName}
+                  onChange={(e) => setEnquiryName(e.target.value)}
+                  placeholder="e.g. Priya Sharma"
+                  className="rounded-none border-accent/30 bg-background/40 focus:border-accent text-foreground placeholder:text-muted-foreground/50"
+                  data-ocid="enquiry.input"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs uppercase tracking-widest text-accent/70 flex items-center gap-1.5">
+                  <Phone className="w-3.5 h-3.5" /> Phone Number
+                </Label>
+                <Input
+                  type="tel"
+                  value={enquiryPhone}
+                  onChange={(e) => setEnquiryPhone(e.target.value)}
+                  placeholder="e.g. 9876543210"
+                  className="rounded-none border-accent/30 bg-background/40 focus:border-accent text-foreground placeholder:text-muted-foreground/50"
+                  data-ocid="enquiry.input"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs uppercase tracking-widest text-accent/70 flex items-center gap-1.5">
+                  <MapPin className="w-3.5 h-3.5" /> Location / City
+                </Label>
+                <Input
+                  value={enquiryLocation}
+                  onChange={(e) => setEnquiryLocation(e.target.value)}
+                  placeholder="e.g. Kolkata, West Bengal"
+                  className="rounded-none border-accent/30 bg-background/40 focus:border-accent text-foreground placeholder:text-muted-foreground/50"
+                  data-ocid="enquiry.input"
+                />
+              </div>
+            </div>
+
+            <div className="flex gap-3 pt-1">
+              <Button
+                type="button"
+                onClick={closeEnquiry}
+                className="flex-1 rounded-none bg-transparent border border-accent/30 text-muted-foreground hover:border-accent/60 hover:text-foreground uppercase tracking-widest text-xs transition-all"
+                data-ocid="enquiry.cancel_button"
+              >
+                Cancel
+              </Button>
+              <Button
+                type="button"
+                onClick={submitEnquiry}
+                disabled={
+                  !enquiryName.trim() ||
+                  !enquiryPhone.trim() ||
+                  !enquiryLocation.trim()
+                }
+                className="flex-1 rounded-none bg-green-700 hover:bg-green-600 text-white gap-2 uppercase tracking-widest text-xs transition-all disabled:opacity-40"
+                data-ocid="enquiry.submit_button"
+              >
+                <MessageCircle className="w-4 h-4" />
+                Send on WhatsApp
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Sticky Header */}
       <header
-        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-          scrolled
-            ? "bg-secondary/97 backdrop-blur-md shadow-maroon"
-            : "bg-secondary"
-        }`}
+        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${scrolled ? "bg-secondary/97 backdrop-blur-md shadow-maroon" : "bg-secondary"}`}
       >
         <div className="h-[3px] w-full bg-gradient-to-r from-accent/40 via-accent to-accent/40" />
         <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
@@ -129,7 +294,6 @@ export default function HomePage() {
               className="h-10 w-auto object-contain"
             />
           </button>
-
           <nav className="hidden md:flex items-center gap-8">
             {navLinks.map((link) => (
               <button
@@ -162,7 +326,6 @@ export default function HomePage() {
               Admin
             </a>
           </nav>
-
           <div className="flex items-center gap-3">
             <a
               href={WA_BASE}
@@ -189,7 +352,6 @@ export default function HomePage() {
             </button>
           </div>
         </div>
-
         {mobileMenuOpen && (
           <div className="md:hidden bg-secondary border-t border-accent/20 px-4 py-4 flex flex-col gap-3">
             {navLinks.map((link) => (
@@ -209,7 +371,7 @@ export default function HomePage() {
               style={{ color: "oklch(72% 0.17 78)" }}
               data-ocid="nav.link"
             >
-              ✦ Submit Inquiry
+              ✶ Submit Inquiry
             </a>
             <a
               href="/admin"
@@ -236,7 +398,7 @@ export default function HomePage() {
       </header>
 
       <main>
-        {/* ── Hero Section ── */}
+        {/* Hero */}
         <section
           id="home"
           className="pt-16 min-h-screen flex items-center relative overflow-hidden"
@@ -257,7 +419,6 @@ export default function HomePage() {
           </div>
           <div className="absolute inset-4 md:inset-8 border border-accent/20 pointer-events-none" />
           <div className="absolute inset-5 md:inset-9 border border-accent/10 pointer-events-none" />
-
           <div className="max-w-6xl mx-auto px-4 sm:px-6 py-16 md:py-24 w-full relative z-10">
             <div className="grid md:grid-cols-2 gap-12 items-center">
               <div className="space-y-7">
@@ -265,7 +426,6 @@ export default function HomePage() {
                   <Star className="w-3 h-3 fill-accent" />
                   New Collection 2026
                 </div>
-
                 <div className="animate-float-up-delay">
                   <h1
                     className="font-display text-5xl md:text-7xl font-bold leading-tight"
@@ -283,7 +443,6 @@ export default function HomePage() {
                     Style that Speaks.
                   </p>
                 </div>
-
                 <p
                   className="leading-relaxed animate-float-up-delay-2 text-lg"
                   style={{ color: "oklch(80% 0.03 75)" }}
@@ -292,7 +451,6 @@ export default function HomePage() {
                   occasion — from ethnic elegance to everyday comfort. Rooted in
                   heritage, dressed for today.
                 </p>
-
                 <div className="flex flex-wrap gap-4 animate-float-up-delay-2">
                   <Button
                     onClick={() => scrollTo("#collections")}
@@ -317,7 +475,6 @@ export default function HomePage() {
                     </Button>
                   </a>
                 </div>
-
                 <div className="flex items-center gap-6 pt-2 animate-float-up-delay-2">
                   <div className="text-center">
                     <div className="font-display font-bold text-2xl text-accent">
@@ -356,7 +513,6 @@ export default function HomePage() {
                   </div>
                 </div>
               </div>
-
               <div className="relative flex justify-center animate-float-up-delay">
                 <div className="relative w-full max-w-lg">
                   <div className="absolute -inset-3 border-2 border-accent/40" />
@@ -428,12 +584,12 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* Collections Section */}
+        {/* Collections */}
         <section id="collections" className="py-20">
           <div className="max-w-6xl mx-auto px-4 sm:px-6">
             <div className="text-center mb-14">
               <p className="text-xs uppercase tracking-[0.35em] text-primary mb-3">
-                ✦ New Arrivals ✦
+                ✶ New Arrivals ✶
               </p>
               <h2 className="font-display text-5xl font-bold text-foreground mb-4">
                 Our Collections
@@ -458,7 +614,6 @@ export default function HomePage() {
                 </p>
               )}
             </div>
-
             {loadingProducts ? (
               <div
                 className="flex justify-center items-center py-20"
@@ -494,9 +649,6 @@ export default function HomePage() {
               >
                 {products.map((product, idx) => {
                   const price = Number(product.price);
-                  const waMsg = encodeURIComponent(
-                    `Hi! I'm interested in ${product.name} priced at ₹${price}.\nDelivery: ₹${feeAmount ?? 0}\nPlease share more details and confirm availability.`,
-                  );
                   return (
                     <Card
                       key={product.id}
@@ -532,17 +684,16 @@ export default function HomePage() {
                             </p>
                           )}
                         </div>
-                        <a
-                          href={`${WA_BASE}?text=${waMsg}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
+                        <Button
+                          onClick={() =>
+                            openEnquiry(product as unknown as EnquiryProduct)
+                          }
+                          className="w-full rounded-none bg-secondary text-accent border border-accent/40 hover:bg-accent hover:text-accent-foreground gap-2 text-xs uppercase tracking-widest transition-all"
                           data-ocid={`collections.primary_button.${idx + 1}`}
                         >
-                          <Button className="w-full rounded-none bg-secondary text-accent border border-accent/40 hover:bg-accent hover:text-accent-foreground gap-2 text-xs uppercase tracking-widest transition-all">
-                            <MessageCircle className="w-4 h-4" />
-                            Enquire on WhatsApp
-                          </Button>
-                        </a>
+                          <MessageCircle className="w-4 h-4" />
+                          Enquire on WhatsApp
+                        </Button>
                       </CardContent>
                     </Card>
                   );
@@ -557,7 +708,7 @@ export default function HomePage() {
           <LotusDecor className="w-56 h-auto text-accent/40" />
         </div>
 
-        {/* About Section */}
+        {/* About */}
         <section
           id="about"
           className="py-20 relative overflow-hidden"
@@ -570,7 +721,7 @@ export default function HomePage() {
             <div className="grid md:grid-cols-2 gap-14 items-center">
               <div className="space-y-6">
                 <p className="text-xs uppercase tracking-[0.35em] text-primary">
-                  ✦ Our Story ✦
+                  ✶ Our Story ✶
                 </p>
                 <h2 className="font-display text-5xl font-bold text-foreground leading-tight">
                   Crafted With
@@ -607,23 +758,15 @@ export default function HomePage() {
                 {aboutStats.map(({ val, label, sub, offset, highlight }) => (
                   <div
                     key={label}
-                    className={`card-ornate p-6 text-center space-y-2 ${
-                      offset ? "mt-8" : ""
-                    } ${highlight ? "bg-secondary border-accent/60" : ""}`}
+                    className={`card-ornate p-6 text-center space-y-2 ${offset ? "mt-8" : ""} ${highlight ? "bg-secondary border-accent/60" : ""}`}
                   >
                     <div
-                      className={`font-display text-4xl font-bold ${
-                        highlight ? "text-accent" : "text-primary"
-                      }`}
+                      className={`font-display text-4xl font-bold ${highlight ? "text-accent" : "text-primary"}`}
                     >
                       {val}
                     </div>
                     <div
-                      className={`text-sm font-medium font-display ${
-                        highlight
-                          ? "text-secondary-foreground"
-                          : "text-foreground"
-                      }`}
+                      className={`text-sm font-medium font-display ${highlight ? "text-secondary-foreground" : "text-foreground"}`}
                     >
                       {label}
                     </div>
@@ -659,7 +802,7 @@ export default function HomePage() {
               </div>
               <div className="relative z-10 p-10 md:p-16 text-center space-y-7">
                 <p className="text-xs uppercase tracking-[0.35em] text-accent/70">
-                  ✦ Get In Touch ✦
+                  ✶ Get In Touch ✶
                 </p>
                 <h2
                   className="font-display text-5xl font-bold"
@@ -839,7 +982,7 @@ export default function HomePage() {
         </div>
       </footer>
 
-      {/* Floating WhatsApp Button */}
+      {/* Floating WhatsApp */}
       <a
         href={WA_BASE}
         target="_blank"
