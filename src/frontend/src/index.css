@@ -1,0 +1,98 @@
+@import url("https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=Playfair+Display:wght@400;600;700&display=swap");
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Background */
+    --background: 100% 0 0;
+    --foreground: 20% 0.02 264;
+
+    /* Cards */
+    --card: 99% 0 0;
+    --card-foreground: 20% 0.02 264;
+
+    /* Popover */
+    --popover: 100% 0 0;
+    --popover-foreground: 20% 0.02 264;
+
+    /* Primary - Blue-violet accent */
+    --primary: 50% 0.22 264;
+    --primary-foreground: 100% 0 0;
+
+    /* Secondary */
+    --secondary: 96% 0.01 264;
+    --secondary-foreground: 30% 0.05 264;
+
+    /* Muted */
+    --muted: 97% 0.005 264;
+    --muted-foreground: 55% 0.04 264;
+
+    /* Accent */
+    --accent: 93% 0.03 264;
+    --accent-foreground: 30% 0.05 264;
+
+    /* Destructive */
+    --destructive: 50% 0.22 25;
+    --destructive-foreground: 100% 0 0;
+
+    /* Border / Input / Ring */
+    --border: 91% 0.01 264;
+    --input: 91% 0.01 264;
+    --ring: 50% 0.22 264;
+
+    /* Radius */
+    --radius: 0.75rem;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-family: "Plus Jakarta Sans", sans-serif;
+  }
+}
+
+@keyframes pulse-whatsapp {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 oklch(55% 0.22 145 / 0.5);
+  }
+  50% {
+    box-shadow: 0 0 0 12px oklch(55% 0.22 145 / 0);
+  }
+}
+
+.whatsapp-pulse {
+  animation: pulse-whatsapp 2s ease-in-out infinite;
+}
+
+@keyframes float-up {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-float-up {
+  animation: float-up 0.7s ease-out forwards;
+}
+
+.animate-float-up-delay {
+  opacity: 0;
+  animation: float-up 0.7s ease-out 0.2s forwards;
+}
+
+.animate-float-up-delay-2 {
+  opacity: 0;
+  animation: float-up 0.7s ease-out 0.4s forwards;
+}
