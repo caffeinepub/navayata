@@ -40,8 +40,9 @@ export default {
         ring: "oklch(var(--ring))",
       },
       fontFamily: {
-        sans: ['Plus Jakarta Sans', 'sans-serif'],
-        display: ['Playfair Display', 'serif'],
+        sans: ['EB Garamond', 'Georgia', 'serif'],
+        display: ['Cormorant Garamond', 'Playfair Display', 'Georgia', 'serif'],
+        body: ['EB Garamond', 'Georgia', 'serif'],
       },
       borderRadius: {
         lg: "var(--radius)",
@@ -49,8 +50,11 @@ export default {
         sm: "calc(var(--radius) - 4px)",
       },
       boxShadow: {
-        card: "0 2px 16px oklch(20% 0.02 264 / 0.08)",
-        "card-hover": "0 8px 32px oklch(20% 0.02 264 / 0.14)",
+        card: "0 2px 16px oklch(22% 0.05 35 / 0.08)",
+        "card-hover": "0 8px 32px oklch(22% 0.05 35 / 0.16)",
+        "gold": "0 4px 20px oklch(72% 0.17 78 / 0.3)",
+        "gold-lg": "0 8px 40px oklch(72% 0.17 78 / 0.4)",
+        "maroon": "0 4px 20px oklch(30% 0.13 18 / 0.25)",
       },
     },
   },
